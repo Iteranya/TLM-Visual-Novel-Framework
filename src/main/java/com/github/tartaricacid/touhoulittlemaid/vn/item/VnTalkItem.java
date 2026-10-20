@@ -72,11 +72,8 @@ public class VnTalkItem extends Item {
             return InteractionResult.SUCCESS;
         }
 
-        String itemScene = SceneRegistry.findItemScene(maid, characterId, stack.getItem());
-        if (itemScene != null) {
-            SceneLauncher.open(maid, itemScene);
-            return InteractionResult.SUCCESS;
-        }
+        // One entry point per character. The spine decides what happens today —
+        // including reacting to whatever is in your hand (see @scene.heldItem).
         SceneLauncher.openDefault(maid, characterId);
         return InteractionResult.SUCCESS;
     }

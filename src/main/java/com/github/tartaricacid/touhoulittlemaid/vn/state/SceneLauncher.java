@@ -36,6 +36,13 @@ public final class SceneLauncher {
     public static final String VAR_IS_DAY = "isDay";
     public static final String VAR_IS_NIGHT = "isNight";
 
+    /**
+     * Item id the player was holding when the scene opened, e.g.
+     * {@code minecraft:end_rod}, or {@code minecraft:air} for empty hands.
+     * Lets the spine react to a gift without any engine-side item registry.
+     */
+    public static final String VAR_HELD_ITEM = "heldItem";
+
     private SceneLauncher() {
     }
 
@@ -107,6 +114,15 @@ public final class SceneLauncher {
         VnState.set(VnScope.SCENE, VAR_IS_NIGHT, !day);
         VnState.set(VnScope.SCENE, "playerName", player.getName().getString());
         VnState.set(VnScope.SCENE, "dimension", player.level().dimension().location().toString());
+
+        // What the player is holding, so the spine can react to a gift without
+        // the engine needing an item registry. A script branches on
+        // @scene.heldItem like it branches on isDay.
+        net.minecraft.world.item.ItemStack main = player.getMainHandItem();
+        String held = main.isEmpty() ? "minecraft:air"
+                : net.minecraftforge.registries.ForgeRegistries.ITEMS
+                .getKey(main.getItem()).toString();
+        VnState.set(VnScope.SCENE, VAR_HELD_ITEM, held);
     }
 
     /**

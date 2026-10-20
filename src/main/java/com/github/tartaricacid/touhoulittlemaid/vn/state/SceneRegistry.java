@@ -67,13 +67,6 @@ public final class SceneRegistry {
      */
     public static final String LEGACY_NAMESPACE = "mobtalkerredux";
 
-    /**
-     * Item-scene subfolder inside a character's folder. Item scenes are matched
-     * by their {@code requires.item} field, not by filename; the folder exists
-     * purely so a character with dozens of toys stays navigable.
-     */
-    public static final String ITEM_DIR = "items";
-
     private static final Gson GSON = new GsonBuilder()
             .setObjectToNumberStrategy(com.google.gson.ToNumberPolicy.LONG_OR_DOUBLE)
             .setPrettyPrinting()
@@ -146,8 +139,8 @@ public final class SceneRegistry {
     }
 
     /**
-     * Cheap peek at the first {@code meta} action, for a scene's
-     * {@code requires} block.
+     * Cheap peek at the first {@code meta} action. Used for diagnostics and for
+     * reading a scene's declared metadata without walking the whole action list.
      */
     @Nullable
     public static Map<String, Object> peekMeta(String sceneId) {
@@ -406,92 +399,7 @@ public final class SceneRegistry {
         return lines;
     }
 
-    /**
-     * Scenes this maid has unlocked right now.
-     * <p>
-     * A scene's first {@code meta} action may carry a {@code requires} block:
-     * <pre>
-     * { "type":"meta", "action":"start",
-     *   "requires": { "affection": 384,
-     *                 "flags": ["cupa.gift_stage:3"],
-     *                 "seen": ["cupa/night"] } }
-     * </pre>
-     * {@code affection} compared against {@code @world.affection.<character>},
-     * {@code flags} must all be truthy in maid or world scope, {@code seen}
-     * entries must be true in {@code @maid.seen.<id>}.
-     * <p>
-     * Scenes without {@code requires} are always available. This is what
-     * {@code play_scene} uses to build its enum, so the model only ever sees
-     * what she would actually agree to.
-     */
-    public static Set<String> listUnlockedFor(EntityMaid maid) {
-        String characterId = sceneFolderOf(maid);
-        Set<String> out = new TreeSet<>();
-        for (String id : listForCharacter(characterId)) {
-            if (isUnlocked(maid, characterId, id)) {
-                out.add(id);
-            }
-        }
-        return Collections.unmodifiableSet(out);
-    }
-
-    /**
-     * Whether a specific scene is currently unlocked for this maid.
-     */
-    public static boolean isUnlocked(EntityMaid maid, String characterId, String sceneId) {
-        Map<String, Object> meta = peekMeta(sceneId);
-        if (meta == null) {
-            return false;
-        }
-        Object requiresObj = meta.get("requires");
-        if (!(requiresObj instanceof Map<?, ?> requires) || requires.isEmpty()) {
-            return true;
-        }
-
-        // affection
-        Object affObj = requires.get("affection");
-        if (affObj instanceof Number needed) {
-            int affection = VnState.getInt(VnScope.WORLD, "affection." + characterId, 0);
-            if (affection < needed.intValue()) {
-                return false;
-            }
-        }
-
-        // flags: every entry must be truthy. "name:value" compares as string.
-        Object flagsObj = requires.get("flags");
-        if (flagsObj instanceof List<?> flags) {
-            for (Object flag : flags) {
-                String spec = String.valueOf(flag);
-                int colon = spec.lastIndexOf(':');
-                if (colon > 0) {
-                    String key = spec.substring(0, colon);
-                    String expected = spec.substring(colon + 1);
-                    String actual = VnState.getString(VnScope.MAID, key,
-                            VnState.getString(VnScope.WORLD, key, ""));
-                    if (!expected.equals(actual)) {
-                        return false;
-                    }
-                } else if (!VnState.getBool(VnScope.MAID, spec,
-                        VnState.getBool(VnScope.WORLD, spec, false))) {
-                    return false;
-                }
-            }
-        }
-
-        // seen: prerequisite scene ids recorded under @maid.seen.<id>
-        Object seenObj = requires.get("seen");
-        if (seenObj instanceof List<?> seen) {
-            for (Object req : seen) {
-                String prefix2 = String.valueOf(req).replace('/', '.');
-                if (!VnState.getBool(VnScope.MAID, "seen." + prefix2, false)) {
-                    return false;
-                }
-            }
-        }
-        return true;
-    }
-
-    /**
+            /**
      * Scene folder for a maid: her custom name if she has one, else her model
      * id. Lowercased, spaces to underscores. Live in the registry rather than
      * the item so the state layer never has to import a client item class.
@@ -517,89 +425,7 @@ public final class SceneRegistry {
         return raw.toLowerCase().replace(' ', '_');
     }
 
-    /**
-     * Find the best item scene for a held item.
-     * <p>
-     * Looks only in {@code <character>/items/} — the spine and story scenes are
-     * never considered. Among matches, picks the one with the highest
-     * {@code requires.affection} that the maid currently passes, so you always
-     * see the most advanced reaction she would accept.
-     * <p>
-     * Deliberately <strong>uncached</strong>. A character folder holds tens of
-     * small files, not thousands; a scan costs a couple of milliseconds and
-     * removing the cache removes a whole class of stale-data bugs.
-     *
-     * @return matching scene id, or null when nothing matches
-     */
-    @Nullable
-    public static String findItemScene(EntityMaid maid, String characterId, net.minecraft.world.item.Item item) {
-        if (item == null) {
-            return null;
-        }
-        String itemId = net.minecraftforge.registries.ForgeRegistries.ITEMS.getKey(item).toString();
-        String itemPrefix = characterId + "/" + ITEM_DIR + "/";
-
-        Set<String> candidates = new TreeSet<>();
-        for (String id : listIds()) {
-            if (!id.startsWith(itemPrefix)) {
-                continue;
-            }
-            Map<String, Object> meta = peekMeta(id);
-            if (meta == null) {
-                continue;
-            }
-            Object requiresObj = meta.get("requires");
-            if (!(requiresObj instanceof Map<?, ?> requires)) {
-                continue;
-            }
-            Object declared = requires.get("item");
-            if (declared == null || !itemId.equals(String.valueOf(declared))) {
-                continue;
-            }
-            if (isUnlocked(maid, characterId, id)) {
-                candidates.add(id);
-            }
-        }
-
-        if (candidates.isEmpty()) {
-            VnMod.log("Held item " + itemId + " -> no matching scene in " + characterId
-                    + "/" + ITEM_DIR + "/, using spine");
-            return null;
-        }
-
-        // Highest affection requirement wins = most advanced accepted reaction.
-        String best = null;
-        int bestThreshold = Integer.MIN_VALUE;
-        for (String id : candidates) {
-            int threshold = requiredAffection(id);
-            VnMod.log("  candidate " + id + " requires affection " + threshold + " -> MATCH");
-            if (threshold > bestThreshold) {
-                bestThreshold = threshold;
-                best = id;
-            }
-        }
-        VnMod.log("Held item " + itemId + " -> " + best);
-        return best;
-    }
-
-    /**
-     * Affection threshold declared by a scene's {@code requires} block, or
-     * {@link Integer#MIN_VALUE} when it declares none.
-     */
-    public static int requiredAffection(String sceneId) {
-        Map<String, Object> meta = peekMeta(sceneId);
-        if (meta == null) {
-            return Integer.MIN_VALUE;
-        }
-        Object requiresObj = meta.get("requires");
-        if (!(requiresObj instanceof Map<?, ?> requires)) {
-            return Integer.MIN_VALUE;
-        }
-        Object aff = requires.get("affection");
-        return aff instanceof Number n ? n.intValue() : Integer.MIN_VALUE;
-    }
-
-    /**
+            /**
      * Scenes belonging to one character folder, e.g. {@code cupa/}.
      */
     public static Set<String> listForCharacter(String characterId) {

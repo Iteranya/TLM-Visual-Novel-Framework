@@ -55,25 +55,32 @@ public class PlaySceneTool implements ITool<PlaySceneTool.Result> {
     @Override
     public Parameter parameters(ObjectParameter root, EntityMaid maid) {
         StringParameter sceneId = StringParameter.create();
-        sceneId.setDescription("Scene id to play, e.g. cupa/main");
-        // Only scenes this maid has actually unlocked. The enum IS the gate:
-        // the model cannot choose what it cannot see, so there is nothing to
-        // refuse and no retry loop.
-        Set<String> ids = SceneRegistry.listUnlockedFor(maid);
-        if (!ids.isEmpty()) {
-            sceneId.addEnumValues(ids.toArray(new String[0]));
+        sceneId.setDescription("Scene id to play. Use the character's spine, e.g. cupa/main");
+        // No gating here. The spine decides what happens when it runs — night,
+        // affection tier, held item — so the model only needs to name the
+        // character's entry scene. Enumerate the installed spines so the enum
+        // reflects actual content without pretending to know what is "unlocked".
+        Set<String> spines = new java.util.TreeSet<>();
+        for (String id : SceneRegistry.listIds()) {
+            if (id.endsWith("/main") || !id.contains("/")) {
+                spines.add(id);
+            }
+        }
+        if (!spines.isEmpty()) {
+            sceneId.addEnumValues(spines.toArray(new String[0]));
         }
         root.addProperties(SCENE_PARAM_ID, sceneId);
         return root;
     }
 
     /**
-     * Hide the tool entirely when she has nothing unlocked. A maid with no
-     * available scenes should not be offered a scene button at all.
+     * Hidden only when the maid has no content at all.
      */
     @Override
     public boolean trigger(EntityMaid maid, ChatCompletion chatCompletion) {
-        return !SceneRegistry.listUnlockedFor(maid).isEmpty();
+        String characterId = SceneRegistry.sceneFolderOf(maid);
+        return SceneRegistry.exists(characterId + "/main")
+                || SceneRegistry.exists(characterId);
     }
 
     @Override
