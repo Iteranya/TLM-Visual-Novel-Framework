@@ -36,10 +36,10 @@ public final class VnCommand {
         dispatcher.register(Commands.literal("tlmvn")
                 .then(Commands.literal("list")
                         .executes(ctx -> {
-                            if (ctx.getSource().getEntity() instanceof net.minecraft.world.entity.player.Player p) {
-                                SceneRegistry.registerLegacyTriggers(java.util.List.of(
-                                        "curipa", "cupa", "cupa_test", "andr", "andrel"));
-                            }
+                            // Legacy flat packs key on the maid's name, and a namespace
+                            // cannot be enumerated. Register the names of maids nearby so
+                            // their triggers show up without hardcoding anyone's content.
+                            SceneRegistry.registerLegacyTriggers(nearbyMaidNames(ctx.getSource()));
                             var entries = SceneRegistry.listEntries();
                             if (entries.isEmpty()) {
                                 ctx.getSource().sendSuccess(() -> Component.literal(
@@ -171,6 +171,27 @@ public final class VnCommand {
                                     return 1;
                                 }))));
         VnMod.log("Registered /tlmvn");
+    }
+
+
+    /**
+     * Names of every maid within 64 blocks of the command source. Used to seed
+     * legacy trigger discovery so {@code /tlmvn list} reflects the world instead
+     * of a hardcoded list of character names.
+     */
+    private static java.util.List<String> nearbyMaidNames(CommandSourceStack src) {
+        try {
+            net.minecraft.server.level.ServerPlayer player = src.getPlayerOrException();
+            net.minecraft.world.phys.AABB box = player.getBoundingBox().inflate(64);
+            return player.level().getEntitiesOfClass(
+                            com.github.tartaricacid.touhoulittlemaid.entity.passive.EntityMaid.class, box)
+                    .stream()
+                    .map(com.github.tartaricacid.touhoulittlemaid.vn.state.SceneRegistry::sceneFolderOf)
+                    .filter(n -> n != null && !n.isBlank())
+                    .toList();
+        } catch (Exception e) {
+            return java.util.List.of();
+        }
     }
 
     private static EntityMaid nearestMaid(ServerPlayer player, double radius) {

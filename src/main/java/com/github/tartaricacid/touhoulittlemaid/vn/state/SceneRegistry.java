@@ -67,6 +67,13 @@ public final class SceneRegistry {
      */
     public static final String LEGACY_NAMESPACE = "mobtalkerredux";
 
+    /**
+     * Item-scene subfolder inside a character's folder. Item scenes are matched
+     * by their {@code requires.item} field, not by filename; the folder exists
+     * purely so a character with dozens of toys stays navigable.
+     */
+    public static final String ITEM_DIR = "items";
+
     private static final Gson GSON = new GsonBuilder()
             .setObjectToNumberStrategy(com.google.gson.ToNumberPolicy.LONG_OR_DOUBLE)
             .setPrettyPrinting()
@@ -508,6 +515,88 @@ public final class SceneRegistry {
             raw = "maid";
         }
         return raw.toLowerCase().replace(' ', '_');
+    }
+
+    /**
+     * Find the best item scene for a held item.
+     * <p>
+     * Looks only in {@code <character>/items/} — the spine and story scenes are
+     * never considered. Among matches, picks the one with the highest
+     * {@code requires.affection} that the maid currently passes, so you always
+     * see the most advanced reaction she would accept.
+     * <p>
+     * Deliberately <strong>uncached</strong>. A character folder holds tens of
+     * small files, not thousands; a scan costs a couple of milliseconds and
+     * removing the cache removes a whole class of stale-data bugs.
+     *
+     * @return matching scene id, or null when nothing matches
+     */
+    @Nullable
+    public static String findItemScene(EntityMaid maid, String characterId, net.minecraft.world.item.Item item) {
+        if (item == null) {
+            return null;
+        }
+        String itemId = net.minecraftforge.registries.ForgeRegistries.ITEMS.getKey(item).toString();
+        String itemPrefix = characterId + "/" + ITEM_DIR + "/";
+
+        Set<String> candidates = new TreeSet<>();
+        for (String id : listIds()) {
+            if (!id.startsWith(itemPrefix)) {
+                continue;
+            }
+            Map<String, Object> meta = peekMeta(id);
+            if (meta == null) {
+                continue;
+            }
+            Object requiresObj = meta.get("requires");
+            if (!(requiresObj instanceof Map<?, ?> requires)) {
+                continue;
+            }
+            Object declared = requires.get("item");
+            if (declared == null || !itemId.equals(String.valueOf(declared))) {
+                continue;
+            }
+            if (isUnlocked(maid, characterId, id)) {
+                candidates.add(id);
+            }
+        }
+
+        if (candidates.isEmpty()) {
+            VnMod.log("Held item " + itemId + " -> no matching scene in " + characterId
+                    + "/" + ITEM_DIR + "/, using spine");
+            return null;
+        }
+
+        // Highest affection requirement wins = most advanced accepted reaction.
+        String best = null;
+        int bestThreshold = Integer.MIN_VALUE;
+        for (String id : candidates) {
+            int threshold = requiredAffection(id);
+            VnMod.log("  candidate " + id + " requires affection " + threshold + " -> MATCH");
+            if (threshold > bestThreshold) {
+                bestThreshold = threshold;
+                best = id;
+            }
+        }
+        VnMod.log("Held item " + itemId + " -> " + best);
+        return best;
+    }
+
+    /**
+     * Affection threshold declared by a scene's {@code requires} block, or
+     * {@link Integer#MIN_VALUE} when it declares none.
+     */
+    public static int requiredAffection(String sceneId) {
+        Map<String, Object> meta = peekMeta(sceneId);
+        if (meta == null) {
+            return Integer.MIN_VALUE;
+        }
+        Object requiresObj = meta.get("requires");
+        if (!(requiresObj instanceof Map<?, ?> requires)) {
+            return Integer.MIN_VALUE;
+        }
+        Object aff = requires.get("affection");
+        return aff instanceof Number n ? n.intValue() : Integer.MIN_VALUE;
     }
 
     /**

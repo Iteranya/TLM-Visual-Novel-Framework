@@ -72,6 +72,11 @@ public class VnTalkItem extends Item {
             return InteractionResult.SUCCESS;
         }
 
+        String itemScene = SceneRegistry.findItemScene(maid, characterId, stack.getItem());
+        if (itemScene != null) {
+            SceneLauncher.open(maid, itemScene);
+            return InteractionResult.SUCCESS;
+        }
         SceneLauncher.openDefault(maid, characterId);
         return InteractionResult.SUCCESS;
     }
