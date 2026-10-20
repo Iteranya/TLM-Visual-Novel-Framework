@@ -52,19 +52,22 @@ public final class SceneRegistry {
     /**
      * Asset namespace shared by the framework and every content pack.
      */
-    public static final String NAMESPACE = "tlm_vn";
+    /**
+     * Content namespace. One flat file per character, 2024-style:
+     * {@code assets/hikarin/<trigger>.json}. The trigger is the file name.
+     */
+    public static final String NAMESPACE = "hikarin";
 
     /**
      * Path prefix inside a resource pack, without {@code assets/<ns>/}.
      */
-    public static final String SCENE_DIR = "scenes";
-
     /**
      * Legacy MobTalker/Hikarin namespace. Old packs predate the fold and use
      * {@code assets/mobtalkerredux/<trigger>.json} — one flat file per
      * character, where the trigger is the file name. Supported so existing
      * content keeps working without conversion.
      */
+    /** Read-only fallback so 2024-era packs keep playing unmodified. */
     public static final String LEGACY_NAMESPACE = "mobtalkerredux";
 
     private static final Gson GSON = new GsonBuilder()
@@ -88,8 +91,11 @@ public final class SceneRegistry {
 
     // ------------------------------------------------------------------ config
 
+    /**
+     * Dev fallback while authoring: {@code config/tlm_vn/<trigger>.json}.
+     */
     public static Path configScenesRoot() {
-        return FMLPaths.CONFIGDIR.get().resolve(VnMod.VN_NAMESPACE).resolve(SCENE_DIR);
+        return FMLPaths.CONFIGDIR.get().resolve(VnMod.VN_NAMESPACE);
     }
 
     // ------------------------------------------------------------------ listing
@@ -202,24 +208,19 @@ public final class SceneRegistry {
             cleaned = cleaned.substring(0, cleaned.length() - 5);
         }
 
-        // 1. Resource packs. The jar counts as one, so bundled demo scenes
-        //    resolve here with zero setup.
-        ResourceLocation rl = new ResourceLocation(NAMESPACE, SCENE_DIR + "/" + cleaned + ".json");
+        // Flat id: "cupa/main" collapses to "cupa_main" only if a nested path was
+        // given; a plain trigger like "curipa" stays as-is.
+        String flat = cleaned.replace('/', '_');
+
         ResourceManager manager = Minecraft.getInstance().getResourceManager();
         if (manager != null) {
-            Optional<Resource> found = manager.getResource(rl);
-            if (found.isPresent()) {
+            // 1. Current namespace, flat file per character.
+            ResourceLocation rl = new ResourceLocation(NAMESPACE, flat + ".json");
+            if (manager.getResource(rl).isPresent()) {
                 return new Located(rl, null);
             }
-        }
-
-        // 2. Legacy flat scenes: assets/mobtalkerredux/<trigger>.json
-        //    The trigger is the file name, so "curipa.json" is scene id "curipa".
-        //    Resolved via getResource (namespace + full path), which is the only
-        //    reliable API here — listResources cannot enumerate a namespace.
-        if (manager != null) {
-            String fileName = cleaned.replace('/', '_');
-            ResourceLocation legacy = new ResourceLocation(LEGACY_NAMESPACE, fileName + ".json");
+            // 2. Legacy namespace, same shape, read-only compatibility.
+            ResourceLocation legacy = new ResourceLocation(LEGACY_NAMESPACE, flat + ".json");
             if (manager.getResource(legacy).isPresent()) {
                 return new Located(legacy, null);
             }
@@ -243,7 +244,7 @@ public final class SceneRegistry {
         if (!Files.isDirectory(root)) {
             return ids;
         }
-        try (var walk = Files.walk(root, 4)) {
+        try (var walk = Files.walk(root, 1)) {
             walk.filter(Files::isRegularFile)
                     .filter(p -> p.getFileName().toString().toLowerCase().endsWith(".json"))
                     .forEach(p -> ids.add(toId(root.relativize(p).toString())));
@@ -264,44 +265,11 @@ public final class SceneRegistry {
             return out;
         }
 
-        // Legacy flat scenes first, so a modern pack can shadow them.
+        // One flat file per character, exactly like a 2024 MobTalker pack.
+        // ResourceLocation carries no namespace in listResources, so we cannot
+        // filter by namespace there — we probe each known name instead, which is
+        // the only reliable lookup available.
         scanLegacy(manager, out);
-        // Minecraft's MultiPackResourceManager REJECTS a trailing slash with
-        // "IllegalArgumentException: Trailing slash in path". Passing SCENE_DIR
-        // + "/" threw on every call, which is why /tlmvn list never worked.
-        // The prefix must be bare: "scenes".
-        final String prefix = SCENE_DIR;
-        final String prefixWithSlash = prefix + "/";
-
-        Map<ResourceLocation, Resource> matches;
-        try {
-            matches = manager.listResources(
-                    prefix, rl -> NAMESPACE.equals(rl.getNamespace())
-                            && rl.getPath().toLowerCase().endsWith(".json"));
-        } catch (RuntimeException e) {
-            // One malformed pack must not take down scene listing for every
-            // other pack. Log and fall back to whatever config offered.
-            VnMod.error("Resource pack scene scan failed; only config scenes will be listed", e);
-            return out;
-        }
-
-        for (Map.Entry<ResourceLocation, Resource> e : matches.entrySet()) {
-            String path = e.getKey().getPath();
-            if (!path.startsWith(prefixWithSlash)) {
-                continue;
-            }
-            String id = toId(path.substring(prefixWithSlash.length()));
-            if (id.isBlank()) {
-                continue;
-            }
-            String pack;
-            try {
-                pack = e.getValue().sourcePackId();
-            } catch (RuntimeException ex) {
-                pack = "unknown";
-            }
-            out.put(id, new SceneEntry(id, Source.RESOURCE_PACK, pack));
-        }
         return out;
     }
 
@@ -388,8 +356,8 @@ public final class SceneRegistry {
     public static List<String> describe() {
         Map<String, SceneEntry> entries = listEntries();
         if (entries.isEmpty()) {
-            return List.of("no scenes installed. Expected assets/" + NAMESPACE + "/"
-                    + SCENE_DIR + "/<character>/<scene>.json inside a resource pack.");
+            return List.of("no scenes installed. Expected assets/" + NAMESPACE
+                    + "/<trigger>.json inside a resource pack, or " + configScenesRoot());
         }
         List<String> lines = new ArrayList<>();
         for (SceneEntry e : entries.values()) {

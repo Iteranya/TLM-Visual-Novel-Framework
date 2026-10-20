@@ -28,6 +28,11 @@ public final class VnAssets {
     public static final String ASSET_NAMESPACE = "touhou_little_maid";
 
     /**
+     * Content namespace, matching {@link SceneRegistry#NAMESPACE}.
+     */
+    public static final String CONTENT_NAMESPACE = "hikarin";
+
+    /**
      * Subfolder under {@code textures/} for VN art in the modern layout.
      */
     public static final String TEXTURE_SUBDIR = "vn/";
@@ -65,13 +70,19 @@ public final class VnAssets {
             return modern(clean);
         }
 
-        // 1. Modern: touhou_little_maid:textures/vn/<path>
+        // 1. Content namespace: hikarin:textures/<path>
+        ResourceLocation content = new ResourceLocation(CONTENT_NAMESPACE, "textures/" + clean);
+        if (exists(manager, content)) {
+            return content;
+        }
+
+        // 2. Framework's own bundled art: touhou_little_maid:textures/vn/<path>
         ResourceLocation modernLoc = modern(clean);
         if (exists(manager, modernLoc)) {
             return modernLoc;
         }
 
-        // 2. Legacy: mobtalkerredux:textures/<path>
+        // 3. Legacy 2024 packs: mobtalkerredux:textures/<path>
         ResourceLocation legacy = new ResourceLocation(LEGACY_NAMESPACE, "textures/" + clean);
         if (exists(manager, legacy)) {
             return legacy;

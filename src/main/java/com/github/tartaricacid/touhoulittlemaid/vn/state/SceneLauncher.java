@@ -139,24 +139,13 @@ public final class SceneLauncher {
      * only if it is absent do we look for a foldered spine.
      */
     public static boolean openDefault(EntityMaid maid, String characterId) {
-        // 1. Legacy flat trigger.
-        if (SceneRegistry.exists(characterId)) {
-            return open(maid, characterId);
-        }
-        // 2. Modern spine.
-        String main = characterId + "/main";
-        if (SceneRegistry.exists(main)) {
-            return open(maid, main);
-        }
-        // 3. Anything else for this character.
-        String only = SceneRegistry.listIds().stream()
-                .filter(id -> id.startsWith(characterId + "/"))
-                .findFirst()
-                .orElse(null);
-        if (only == null) {
-            VnMod.warn("No scenes found for character '" + characterId + "'");
+        // One file per character; the trigger is the file name. Nothing else to
+        // try — the spine inside that file decides what happens today.
+        if (!SceneRegistry.exists(characterId)) {
+            VnMod.warn("No scene for character '" + characterId
+                    + "' (expected assets/" + SceneRegistry.NAMESPACE + "/" + characterId + ".json)");
             return false;
         }
-        return open(maid, only);
+        return open(maid, characterId);
     }
 }
