@@ -1,0 +1,358 @@
+[
+  {
+    "type": "meta",
+    "action": "declare",
+    "scope": "WORLD",
+    "var": "affection.cupa",
+    "init": 0,
+    "kind": "int",
+    "id": 0
+  },
+  {
+    "type": "meta",
+    "action": "declare",
+    "scope": "MAID",
+    "var": "seen.night_01",
+    "init": false,
+    "kind": "bool",
+    "id": 1
+  },
+  {
+    "type": "meta",
+    "action": "start",
+    "id": 2
+  },
+  {
+    "type": "label",
+    "action": "label",
+    "label": "start",
+    "id": 3
+  },
+  {
+    "type": "conditional",
+    "scope": "MAID",
+    "var": "seen.night_01",
+    "condition": "equal",
+    "value": true,
+    "id": 4,
+    "actions": [
+      {
+        "type": "transition",
+        "action": "jump",
+        "label": "idle",
+        "id": 5
+      }
+    ],
+    "end": 6
+  },
+  {
+    "type": "transition",
+    "action": "jump",
+    "label": "idle",
+    "id": 5
+  },
+  {
+    "type": "show_sprite",
+    "action": "show",
+    "sprite": "cupa",
+    "location": "vn/characters/cupa/default/happy.png",
+    "dyn_location": "vn/characters/cupa/<cupa_outfit>/happy.png",
+    "position": "CENTER",
+    "wRatio": 16,
+    "hRatio": 9,
+    "wFrameRatio": 4,
+    "hFrameRatio": 8,
+    "column": 7,
+    "row": 1,
+    "id": 6
+  },
+  {
+    "type": "dialogue",
+    "action": "say",
+    "label": "Cupa",
+    "content": "Oh hey Player! Long time no see! Ahaha~",
+    "id": 7
+  },
+  {
+    "type": "show_sprite",
+    "action": "show",
+    "sprite": "cupa",
+    "location": "vn/characters/cupa/default/normal.png",
+    "dyn_location": "vn/characters/cupa/<cupa_outfit>/normal.png",
+    "position": "CENTER",
+    "wRatio": 16,
+    "hRatio": 9,
+    "wFrameRatio": 4,
+    "hFrameRatio": 8,
+    "column": 7,
+    "row": 1,
+    "id": 8
+  },
+  {
+    "type": "dialogue",
+    "action": "say",
+    "label": "Cupa",
+    "content": "Anyway, it's been a while~",
+    "id": 9
+  },
+  {
+    "type": "dialogue",
+    "action": "say",
+    "label": "Cupa",
+    "content": "When was the last version again?",
+    "id": 10
+  },
+  {
+    "type": "show_sprite",
+    "action": "show",
+    "sprite": "cupa",
+    "location": "vn/characters/cupa/default/scared.png",
+    "dyn_location": "vn/characters/cupa/<cupa_outfit>/scared.png",
+    "position": "CENTER",
+    "wRatio": 16,
+    "hRatio": 9,
+    "wFrameRatio": 4,
+    "hFrameRatio": 8,
+    "column": 7,
+    "row": 1,
+    "id": 11
+  },
+  {
+    "type": "dialogue",
+    "action": "say",
+    "label": "Cupa",
+    "content": "1.21!? I've been dead for that long!?",
+    "id": 12
+  },
+  {
+    "type": "show_sprite",
+    "action": "show",
+    "sprite": "cupa",
+    "location": "vn/characters/cupa/default/angry.png",
+    "dyn_location": "vn/characters/cupa/<cupa_outfit>/angry.png",
+    "position": "CENTER",
+    "wRatio": 16,
+    "hRatio": 9,
+    "wFrameRatio": 4,
+    "hFrameRatio": 8,
+    "column": 7,
+    "row": 1,
+    "id": 13
+  },
+  {
+    "type": "dialogue",
+    "action": "say",
+    "label": "Cupa",
+    "content": "Can't believe this mod's been abandoned for that long!!!",
+    "id": 14
+  },
+  {
+    "type": "show_sprite",
+    "action": "show",
+    "sprite": "cupa",
+    "location": "vn/characters/cupa/default/normal.png",
+    "dyn_location": "vn/characters/cupa/<cupa_outfit>/normal.png",
+    "position": "CENTER",
+    "wRatio": 16,
+    "hRatio": 9,
+    "wFrameRatio": 4,
+    "hFrameRatio": 8,
+    "column": 7,
+    "row": 1,
+    "id": 15
+  },
+  {
+    "type": "dialogue",
+    "action": "say",
+    "label": "Cupa",
+    "content": "You're not supposed to be reading this, you know.",
+    "id": 16
+  },
+  {
+    "type": "dialogue",
+    "action": "say",
+    "label": "Cupa",
+    "content": "Unless... you made this script yourself?",
+    "id": 17
+  },
+  {
+    "type": "show_sprite",
+    "action": "show",
+    "sprite": "cupa",
+    "location": "vn/characters/cupa/default/shy.png",
+    "dyn_location": "vn/characters/cupa/<cupa_outfit>/shy.png",
+    "position": "CENTER",
+    "wRatio": 16,
+    "hRatio": 9,
+    "wFrameRatio": 4,
+    "hFrameRatio": 8,
+    "column": 7,
+    "row": 1,
+    "id": 18
+  },
+  {
+    "type": "dialogue",
+    "action": "say",
+    "label": "Cupa",
+    "content": "Ehehe. Then I guess you're my maker now.",
+    "id": 19
+  },
+  {
+    "type": "modify_variable",
+    "scope": "WORLD",
+    "action": "increment_var",
+    "var": "affection.cupa",
+    "value": 5,
+    "id": 20
+  },
+  {
+    "type": "dialogue",
+    "action": "say",
+    "label": "Cupa",
+    "content": "Don't let it get to your head.",
+    "id": 21
+  },
+  {
+    "type": "unlock_dialogues",
+    "events": [
+      "idle_1",
+      "idle_2",
+      "idle_3"
+    ],
+    "id": 22
+  },
+  {
+    "type": "next",
+    "label": "start",
+    "id": 23
+  },
+  {
+    "type": "finish_dialogue",
+    "id": 24
+  },
+  {
+    "type": "label",
+    "action": "label",
+    "label": "idle",
+    "id": 25
+  },
+  {
+    "type": "idle_chat",
+    "id": 26
+  },
+  {
+    "type": "finish_dialogue",
+    "id": 27
+  },
+  {
+    "type": "label",
+    "action": "label",
+    "label": "idle_1",
+    "id": 28
+  },
+  {
+    "type": "show_sprite",
+    "action": "show",
+    "sprite": "cupa",
+    "location": "vn/characters/cupa/default/normal.png",
+    "dyn_location": "vn/characters/cupa/<cupa_outfit>/normal.png",
+    "position": "CENTER",
+    "wRatio": 16,
+    "hRatio": 9,
+    "wFrameRatio": 4,
+    "hFrameRatio": 8,
+    "column": 7,
+    "row": 1,
+    "id": 29
+  },
+  {
+    "type": "dialogue",
+    "action": "say",
+    "label": "Cupa",
+    "content": "It's quiet today. I like quiet.",
+    "id": 30
+  },
+  {
+    "type": "next",
+    "label": "start",
+    "id": 31
+  },
+  {
+    "type": "finish_dialogue",
+    "id": 32
+  },
+  {
+    "type": "label",
+    "action": "label",
+    "label": "idle_2",
+    "id": 33
+  },
+  {
+    "type": "show_sprite",
+    "action": "show",
+    "sprite": "cupa",
+    "location": "vn/characters/cupa/default/happy.png",
+    "dyn_location": "vn/characters/cupa/<cupa_outfit>/happy.png",
+    "position": "CENTER",
+    "wRatio": 16,
+    "hRatio": 9,
+    "wFrameRatio": 4,
+    "hFrameRatio": 8,
+    "column": 7,
+    "row": 1,
+    "id": 34
+  },
+  {
+    "type": "dialogue",
+    "action": "say",
+    "label": "Cupa",
+    "content": "Did you know? You're supposed to feed me, not the other way around.",
+    "id": 35
+  },
+  {
+    "type": "next",
+    "label": "start",
+    "id": 36
+  },
+  {
+    "type": "finish_dialogue",
+    "id": 37
+  },
+  {
+    "type": "label",
+    "action": "label",
+    "label": "idle_3",
+    "id": 38
+  },
+  {
+    "type": "show_sprite",
+    "action": "show",
+    "sprite": "cupa",
+    "location": "vn/characters/cupa/default/shy.png",
+    "dyn_location": "vn/characters/cupa/<cupa_outfit>/shy.png",
+    "position": "CENTER",
+    "wRatio": 16,
+    "hRatio": 9,
+    "wFrameRatio": 4,
+    "hFrameRatio": 8,
+    "column": 7,
+    "row": 1,
+    "id": 39
+  },
+  {
+    "type": "dialogue",
+    "action": "say",
+    "label": "Cupa",
+    "content": "Stop staring. I can see you.",
+    "id": 40
+  },
+  {
+    "type": "next",
+    "label": "start",
+    "id": 41
+  },
+  {
+    "type": "finish_dialogue",
+    "id": 42
+  }
+]

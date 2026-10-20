@@ -1,0 +1,113 @@
+[
+  {
+    "type": "meta",
+    "action": "start",
+    "id": 0
+  },
+  {
+    "type": "label",
+    "action": "label",
+    "label": "start",
+    "id": 1
+  },
+  {
+    "type": "show_sprite",
+    "action": "show",
+    "sprite": "cupa",
+    "location": "vn/characters/cupa/default/tired.png",
+    "dyn_location": "vn/characters/cupa/<cupa_outfit>/tired.png",
+    "position": "CENTER",
+    "wRatio": 16,
+    "hRatio": 9,
+    "wFrameRatio": 4,
+    "hFrameRatio": 8,
+    "column": 7,
+    "row": 1,
+    "id": 2
+  },
+  {
+    "type": "dialogue",
+    "action": "say",
+    "label": "Cupa",
+    "content": "Mnh... Player? It's late...",
+    "id": 3
+  },
+  {
+    "type": "show_sprite",
+    "action": "show",
+    "sprite": "cupa",
+    "location": "vn/characters/cupa/default/normal.png",
+    "dyn_location": "vn/characters/cupa/<cupa_outfit>/normal.png",
+    "position": "CENTER",
+    "wRatio": 16,
+    "hRatio": 9,
+    "wFrameRatio": 4,
+    "hFrameRatio": 8,
+    "column": 7,
+    "row": 1,
+    "id": 4
+  },
+  {
+    "type": "dialogue",
+    "action": "say",
+    "label": "Cupa",
+    "content": "You came to see me at night? ...Bold.",
+    "id": 5
+  },
+  {
+    "type": "show_sprite",
+    "action": "show",
+    "sprite": "cupa",
+    "location": "vn/characters/cupa/default/shy.png",
+    "dyn_location": "vn/characters/cupa/<cupa_outfit>/shy.png",
+    "position": "CENTER",
+    "wRatio": 16,
+    "hRatio": 9,
+    "wFrameRatio": 4,
+    "hFrameRatio": 8,
+    "column": 7,
+    "row": 1,
+    "id": 6
+  },
+  {
+    "type": "dialogue",
+    "action": "say",
+    "label": "Cupa",
+    "content": "I'm not going to say no. But you have to earn it.",
+    "id": 7
+  },
+  {
+    "type": "modify_variable",
+    "scope": "WORLD",
+    "action": "increment_var",
+    "var": "affection.cupa",
+    "value": 10,
+    "id": 8
+  },
+  {
+    "type": "modify_variable",
+    "scope": "MAID",
+    "action": "set",
+    "var": "seen.night_01",
+    "value": true,
+    "id": 9
+  },
+  {
+    "type": "dialogue",
+    "action": "say",
+    "label": "Cupa",
+    "content": "There. Now go to sleep.",
+    "id": 10
+  },
+  {
+    "type": "transition",
+    "action": "jump",
+    "file": "cupa/main",
+    "label": "start",
+    "id": 11
+  },
+  {
+    "type": "finish_dialogue",
+    "id": 12
+  }
+]

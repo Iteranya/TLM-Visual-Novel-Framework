@@ -92,4 +92,12 @@ public final class InitItems {
     public static RegistryObject<Item> KILL_WITHER = ITEMS.register("kill_wither", ItemAdvancementIcon::new);
     public static RegistryObject<Item> KILL_DRAGON = ITEMS.register("kill_dragon", ItemAdvancementIcon::new);
     public static RegistryObject<Item> TACZ_GUN_ICON = ITEMS.register("tacz_gun_icon", ItemAdvancementIcon::new);
+
+    // ---- TLM: Visual Novel Framework ----------------------------------
+    /**
+     * Right-click a maid with this to open her visual novel. Content-neutral:
+     * the item exists in the framework, all scenes come from a content pack.
+     */
+    public static RegistryObject<Item> VN_TALK_ITEM = ITEMS.register("vn_talk_item",
+            com.github.tartaricacid.touhoulittlemaid.vn.item.VnTalkItem::new);
 }

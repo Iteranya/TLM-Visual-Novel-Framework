@@ -1170,5 +1170,10 @@
   "patchouli.touhou_little_maid.book.entries.overview.vanilla_change.pages.0.text": "We modified the slime model to the yukkuri.",
   "patchouli.touhou_little_maid.book.entries.overview.vanilla_change.pages.1.text": "We also changed the textures of Experience Orbs, Bottle 'O Enchanting, and Totem of Undying. $(br2)These can all be turned off in the configuration file.",
   "patchouli.touhou_little_maid.book.entries.overview.favorability.name": "Favorability",
-  "patchouli.touhou_little_maid.book.entries.overview.favorability.pages.0.text": "Higher favorability will increase the maid's health and attack.$(br2)improving maid favorability:$(li)When the maid is in idle schedule, she will play with the keyboard, computer, bookshelf or gomoku.$(li)Maid sleeping.$(br2)Reducing maid favorability:$(li)Death of the maid."
+  "patchouli.touhou_little_maid.book.entries.overview.favorability.pages.0.text": "Higher favorability will increase the maid's health and attack.$(br2)improving maid favorability:$(li)When the maid is in idle schedule, she will play with the keyboard, computer, bookshelf or gomoku.$(li)Maid sleeping.$(br2)Reducing maid favorability:$(li)Death of the maid.",
+  "item.tlm_vn.vn_talk_item": "Story Book",
+  "item.tlm_vn.vn_talk_item.desc": "Right-click a maid to open her story",
+  "message.tlm_vn.no_scenes": "No story found for '%s'. Install a content pack, or drop scenes in config/tlm_vn/scenes/%s/",
+  "message.tlm_vn.scene_missing": "Scene '%s' not found.",
+  "ai.touhou_little_maid.chat.tool_call.play_scene": "Opening a scene"
 }

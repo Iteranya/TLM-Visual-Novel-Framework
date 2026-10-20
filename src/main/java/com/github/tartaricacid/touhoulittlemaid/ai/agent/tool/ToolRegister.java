@@ -22,6 +22,8 @@ public class ToolRegister {
         register.register(new SwitchWorkTaskTool());
         register.register(new SwitchScheduleTool());
         register.register(new SwitchSitTool());
+        // TLM: Visual Novel Framework - lets the maid open an authored scene.
+        register.register(new com.github.tartaricacid.touhoulittlemaid.vn.tool.PlaySceneTool());
 
         for (ILittleMaid littleMaid : TouhouLittleMaid.EXTENSIONS) {
             littleMaid.registerAITool(register);

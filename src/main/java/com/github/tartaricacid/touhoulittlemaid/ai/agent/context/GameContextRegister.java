@@ -31,6 +31,8 @@ public final class GameContextRegister {
         EffectsMaidContexts.registerAll(register);
         PositionMaidContexts.registerAll(register);
         NearbyEntityMaidContexts.registerAll(register);
+        // TLM: Visual Novel Framework - affection + scene progress in the prompt
+        com.github.tartaricacid.touhoulittlemaid.vn.tool.VnStateContext.registerAll(register);
 
         for (ILittleMaid littleMaid : TouhouLittleMaid.EXTENSIONS) {
             littleMaid.registerAIMaidContext(register);
