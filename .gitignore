@@ -30,3 +30,6 @@ src/test
 forge*changelog.txt
 /src/generated/resources/.cache/
 .sisyphus
+
+# keep the VN state tests out of the ignore list so they travel with the repo
+!src/test/java/VnStatePersistenceTest.java
