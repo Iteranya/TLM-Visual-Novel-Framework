@@ -238,5 +238,20 @@ public class DialogueScreen extends Screen{
         this.minecraft.setScreen(null);
     }
 
+    /**
+     * Release the entity the state store was pointed at.
+     *
+     * {@code SceneLauncher} attaches the maid's NBT so {@code @maid.} and bare
+     * (scene) variables can read and write it. That pointer has to live for as
+     * long as the screen does — detaching it in the launcher's finally block
+     * ran before the first line of dialogue and made every maid-scoped read
+     * fall back to a default.
+     */
+    @Override
+    public void removed() {
+        super.removed();
+        com.github.tartaricacid.touhoulittlemaid.vn.state.VnState.detachMaid();
+    }
+
 
 }

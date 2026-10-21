@@ -172,6 +172,24 @@ public final class VnState {
         return maidRoot.getCompound(NBT_KEY);
     }
 
+    /** NBT key holding scene-scoped ("local") variables inside the maid tag. */
+    private static final String LOCAL_KEY = "local";
+
+    /**
+     * The sub-compound holding bare-name variables.
+     *
+     * These outlive the scene, matching the 2024 engine's per-entity
+     * {@code localVariables}. Kept in a sub-compound rather than mixed with
+     * {@code @maid.} values so an explicit scope and a bare name can never
+     * collide on the same key.
+     */
+    private static CompoundTag localTag(CompoundTag data) {
+        if (!data.contains(LOCAL_KEY)) {
+            data.put(LOCAL_KEY, new CompoundTag());
+        }
+        return data.getCompound(LOCAL_KEY);
+    }
+
     public static boolean hasMaid() {
         return maidRoot != null;
     }
@@ -189,8 +207,19 @@ public final class VnState {
                 return data == null ? def : readTag(data, name, def);
             }
             case SCENE -> {
-                Object v = SCENE.get(name);
-                return v != null ? v : def;
+                // Scene-scoped values persist with the maid, matching the 2024
+                // engine, where localVariables were written to disk per entity
+                // by saveProgress(). A bare name in a script is the common case,
+                // so making it evaporate between conversations quietly broke
+                // every legacy script that relied on locals surviving.
+                CompoundTag data = maidData();
+                if (data == null) {
+                    // No maid attached (preview, tests): fall back to memory.
+                    Object v = SCENE.get(name);
+                    return v != null ? v : def;
+                }
+                CompoundTag local = localTag(data);
+                return readTag(local, name, def);
             }
             case PLAYER -> {
                 Object v = PLAYER.get(name);
@@ -230,10 +259,15 @@ public final class VnState {
                 }
             }
             case SCENE -> {
-                if (value == null) {
-                    SCENE.remove(name);
+                CompoundTag data = maidData();
+                if (data == null) {
+                    if (value == null) {
+                        SCENE.remove(name);
+                    } else {
+                        SCENE.put(name, value);
+                    }
                 } else {
-                    SCENE.put(name, value);
+                    writeTag(localTag(data), name, value);
                 }
             }
             case PLAYER -> VnMod.warn(
@@ -315,6 +349,56 @@ public final class VnState {
 
     public static void clearScene() {
         SCENE.clear();
+    }
+
+    // ------------------------------------------------------------ checkpoint
+    //
+    // `next` writes a label here and the scene resumes from it next time, which
+    // is what the 2024 engine did with localVariables' "checkpoint" key read
+    // back in loadProgress(). The fold originally stored the label and then
+    // read it nowhere, so `next` looked like a save point and behaved like a
+    // comment.
+
+    private static final String CHECKPOINT_KEY = "checkpoint";
+
+    /** Record the resume label. Pass null or blank to clear it. */
+    public static void setCheckpoint(@Nullable String label) {
+        CompoundTag data = maidData();
+        if (data == null) {
+            if (label == null || label.isBlank()) {
+                SCENE.remove(CHECKPOINT_KEY);
+            } else {
+                SCENE.put(CHECKPOINT_KEY, label);
+            }
+            return;
+        }
+        CompoundTag local = localTag(data);
+        if (label == null || label.isBlank()) {
+            local.remove(CHECKPOINT_KEY);
+        } else {
+            local.putString(CHECKPOINT_KEY, label);
+        }
+    }
+
+    /** The label the story should resume at, or null when there is none. */
+    @Nullable
+    public static String getCheckpoint() {
+        CompoundTag data = maidData();
+        if (data == null) {
+            Object v = SCENE.get(CHECKPOINT_KEY);
+            return v instanceof String s && !s.isBlank() ? s : null;
+        }
+        CompoundTag local = localTag(data);
+        if (!local.contains(CHECKPOINT_KEY)) {
+            return null;
+        }
+        String label = local.getString(CHECKPOINT_KEY);
+        return label.isBlank() ? null : label;
+    }
+
+    /** Drop the resume point, e.g. once the story has run past it. */
+    public static void clearCheckpoint() {
+        setCheckpoint(null);
     }
 
     /**

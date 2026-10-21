@@ -4,6 +4,7 @@ import com.github.tartaricacid.touhoulittlemaid.entity.passive.EntityMaid;
 import com.github.tartaricacid.touhoulittlemaid.vn.VnMod;
 import com.github.tartaricacid.touhoulittlemaid.vn.controller.VisualNovelEngine;
 import com.github.tartaricacid.touhoulittlemaid.vn.controller.vnmodules.PlayerInventoryHandler;
+import com.github.tartaricacid.touhoulittlemaid.vn.controller.vnmodules.StateHandler;
 import com.github.tartaricacid.touhoulittlemaid.vn.view.DialogueScreen;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.entity.player.Player;
@@ -87,17 +88,47 @@ public final class SceneLauncher {
                 );
                 engine.currentSceneId = sceneId;
 
+                // Resume where `next` last left off. This is what the 2024
+                // engine did in loadProgress(): read the "checkpoint" the script
+                // stored and jump the state counter to that label. Without it a
+                // script could write a checkpoint and the scene would still
+                // start from the top.
+                resumeFromCheckpoint(engine, script);
+
                 DialogueScreen screen = new DialogueScreen(engine, maid, player);
                 mc.setScreen(screen);
+                // The maid stays attached for the life of the screen;
+                // DialogueScreen.removed() detaches it. Detaching here would run
+                // before the first line of dialogue and make every @maid. and
+                // bare-name read fall back to its default value.
             } catch (Exception e) {
                 VnMod.error("Failed to open scene " + sceneId, e);
-            } finally {
-                // The screen holds the engine; detach only the NBT pointer so a
-                // later scene reattaches to whatever entity it belongs to.
                 VnState.detachMaid();
             }
         });
         return true;
+    }
+
+    /**
+     * Jump the engine to the checkpoint the script last wrote, if any.
+     *
+     * Reported rather than silent: a checkpoint pointing at a label that no
+     * longer exists is a broken script, and starting from the top without
+     * saying so looks like the save feature is broken.
+     */
+    private static void resumeFromCheckpoint(VisualNovelEngine engine, List<Map<String, Object>> script) {
+        String checkpoint = VnState.getCheckpoint();
+        if (checkpoint == null || checkpoint.isBlank()) {
+            return;
+        }
+        Long id = StateHandler.findLabelId(checkpoint, script);
+        if (id == null) {
+            VnMod.warn("Checkpoint '" + checkpoint + "' is not a label in this scene; starting from the top");
+            VnState.clearCheckpoint();
+            return;
+        }
+        engine.currentState.set(id);
+        VnMod.log("Resumed scene at checkpoint '" + checkpoint + "' (id " + id + ")");
     }
 
     /**

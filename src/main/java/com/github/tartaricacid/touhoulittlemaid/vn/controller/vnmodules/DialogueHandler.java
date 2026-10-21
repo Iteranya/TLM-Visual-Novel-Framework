@@ -121,8 +121,13 @@ public class DialogueHandler {
         }
     }
 
-    public static void processNext(Map<String, Object> action,VisualNovelEngine vn) {
-        vn.localVariables.put("checkpoint",action.get("label"));
+    public static void processNext(Map<String, Object> action, VisualNovelEngine vn) {
+        Object label = action.get("label");
+        // Store the resume point durably. The 2024 engine wrote this into
+        // localVariables, saved them per entity, and jumped back to it in
+        // loadProgress(). Storing it in a map nobody persisted made `next`
+        // behave like a comment.
+        VnState.setCheckpoint(label instanceof String s ? s : null);
     }
 
     public static void processIdleChat(
