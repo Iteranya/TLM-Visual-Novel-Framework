@@ -134,9 +134,25 @@ public class VisualNovelEngine {
                         currentState
                 );
                 break;
-            case "give_item":
-                inventoryHandler.giveItemToPlayer((String) action.get("item"), (int) (long) action.get("amount"));
+            case "give_item": {
+                String itemId = (String) action.get("item");
+                int amount = intOf(action.get("amount"), 1);
+                if (inventoryHandler != null && itemId != null) {
+                    inventoryHandler.giveItemToPlayer(itemId, amount);
+                }
                 break;
+            }
+            case "take_item": {
+                // She takes it from you. Uses the same inventory handler as
+                // give_item; silently does nothing if you do not have it.
+                String itemId = (String) action.get("item");
+                int amount = intOf(action.get("amount"), 1);
+                if (inventoryHandler != null && itemId != null) {
+                    int removed = inventoryHandler.removeItemFromInventory(itemId, amount);
+                    VnMod.log("take_item " + itemId + " x" + amount + " -> removed " + removed);
+                }
+                break;
+            }
             case "conditional":
                 processConditional(action, this);
                 break;
@@ -272,6 +288,25 @@ public class VisualNovelEngine {
         }
         this.currentState.set(id);
         this.currentState.incrementAndGet();
+    }
+
+    /**
+     * Read an action's numeric field regardless of how Gson typed it. JSON
+     * numbers arrive as Integer, Long or Double depending on magnitude, and the
+     * old {@code (int)(long)} cast crashed on anything with a decimal point.
+     */
+    private static int intOf(Object value, int def) {
+        if (value instanceof Number n) {
+            return n.intValue();
+        }
+        if (value instanceof String s) {
+            try {
+                return (int) Double.parseDouble(s);
+            } catch (NumberFormatException ignored) {
+                return def;
+            }
+        }
+        return def;
     }
 
     public void runEngine() {

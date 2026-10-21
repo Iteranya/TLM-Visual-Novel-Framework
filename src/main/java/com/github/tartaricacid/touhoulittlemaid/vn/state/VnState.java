@@ -60,6 +60,11 @@ public final class VnState {
 
     private static final Map<String, Object> WORLD = new ConcurrentHashMap<>();
     private static final Map<String, Object> SCENE = new ConcurrentHashMap<>();
+    /**
+     * Read-only facts about the player and world. Cleared and re-injected on
+     * every scene open; never written by scripts.
+     */
+    private static final Map<String, Object> PLAYER = new ConcurrentHashMap<>();
     private static volatile boolean worldDirty = false;
 
     private VnState() {
@@ -187,6 +192,16 @@ public final class VnState {
                 Object v = SCENE.get(name);
                 return v != null ? v : def;
             }
+            case PLAYER -> {
+                Object v = PLAYER.get(name);
+                if (v != null) {
+                    return v;
+                }
+                // Not in the snapshot: try the lazy facts (advancements,
+                // inventory scans). Computed on read, never cached.
+                Object lazy = VnPlayerFacts.resolve(name);
+                return lazy != null ? lazy : def;
+            }
             default -> {
                 return def;
             }
@@ -221,6 +236,9 @@ public final class VnState {
                     SCENE.put(name, value);
                 }
             }
+            case PLAYER -> VnMod.warn(
+                    "PLAYER." + name + " is read-only; ignoring write. "
+                            + "Use a command action to change the player (effect, give, and so on).");
             default -> {
             }
         }
@@ -297,6 +315,29 @@ public final class VnState {
 
     public static void clearScene() {
         SCENE.clear();
+    }
+
+    /**
+     * Replace the read-only player snapshot. Called by the launcher before every
+     * scene so a script always sees the current moment.
+     */
+    public static void beginPlayerSnapshot() {
+        PLAYER.clear();
+    }
+
+    /**
+     * Record one player fact. Values are simple scalars so scripts can compare
+     * them like any other variable.
+     */
+    public static void putPlayer(String name, Object value) {
+        if (name == null || value == null) {
+            return;
+        }
+        PLAYER.put(name, value);
+    }
+
+    public static Map<String, Object> playerSnapshot() {
+        return new LinkedHashMap<>(PLAYER);
     }
 
     // ------------------------------------------------------------------- NBT IO

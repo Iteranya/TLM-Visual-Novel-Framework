@@ -123,6 +123,58 @@ public final class SceneLauncher {
                 : net.minecraftforge.registries.ForgeRegistries.ITEMS
                 .getKey(main.getItem()).toString();
         VnState.set(VnScope.SCENE, VAR_HELD_ITEM, held);
+
+        injectPlayerFacts(player);
+    }
+
+    /**
+     * Snapshot the player and world into the read-only PLAYER scope.
+     * <p>
+     * Everything here is a cheap fact that a story might reasonably branch on.
+     * Expensive lookups (advancements, inventory scans) are resolved lazily on
+     * read instead of being dumped in wholesale.
+     */
+    private static void injectPlayerFacts(Player player) {
+        VnState.beginPlayerSnapshot();
+
+        VnState.putPlayer("health", player.getHealth());
+        VnState.putPlayer("max_health", player.getMaxHealth());
+        VnState.putPlayer("absorption", player.getAbsorptionAmount());
+        VnState.putPlayer("food", player.getFoodData().getFoodLevel());
+        VnState.putPlayer("saturation", player.getFoodData().getSaturationLevel());
+        VnState.putPlayer("xp_level", player.experienceLevel);
+        VnState.putPlayer("air", player.getAirSupply());
+        VnState.putPlayer("is_sleeping", player.isSleeping());
+        VnState.putPlayer("is_sprinting", player.isSprinting());
+        VnState.putPlayer("is_creative", player.isCreative());
+        VnState.putPlayer("is_spectator", player.isSpectator());
+        VnState.putPlayer("dimension", player.level().dimension().location().toString());
+        VnState.putPlayer("pos_x", Math.floor(player.getX()));
+        VnState.putPlayer("pos_y", Math.floor(player.getY()));
+        VnState.putPlayer("pos_z", Math.floor(player.getZ()));
+
+        if (player instanceof net.minecraft.server.level.ServerPlayer serverPlayer) {
+            String mode = switch (serverPlayer.gameMode.getGameModeForPlayer()) {
+                case CREATIVE -> "creative";
+                case ADVENTURE -> "adventure";
+                case SPECTATOR -> "spectator";
+                default -> "survival";
+            };
+            VnState.putPlayer("gamemode", mode);
+            VnState.putPlayer("difficulty",
+                    serverPlayer.level().getDifficulty().getKey().toLowerCase());
+            VnState.putPlayer("is_hardcore",
+                    serverPlayer.level().getLevelData().isHardcore());
+        } else {
+            // Single-player client mirror; enough for scene branching.
+            VnState.putPlayer("gamemode", player.isCreative() ? "creative" : "survival");
+        }
+
+        VnState.putPlayer("time_of_day", player.level().getDayTime() % 24000L);
+        VnState.putPlayer("day", player.level().getDayTime() / 24000L);
+        VnState.putPlayer("is_raining", player.level().isRaining());
+        VnState.putPlayer("is_thundering", player.level().isThundering());
+        VnState.putPlayer("moon_phase", player.level().getMoonPhase());
     }
 
     /**

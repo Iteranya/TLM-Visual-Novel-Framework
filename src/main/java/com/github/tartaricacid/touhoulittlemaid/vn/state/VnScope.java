@@ -15,6 +15,9 @@ import com.github.tartaricacid.touhoulittlemaid.vn.VnMod;
  *     <li>{@link #MAID} — persists with the entity (NBT). Per-maid story
  *         position, reluctance, seen-scene flags.</li>
  *     <li>{@link #SCENE} — dies with the scene. Temporary working values.</li>
+ *     <li>{@link #PLAYER} — read-only facts about the player and world, injected
+ *         fresh on every scene open: health, food, gamemode, achievements,
+ *         dimension, held item. Never persisted, never writable.</li>
  * </ul>
  * Bare variable names in scripts resolve to {@link #SCENE}, which keeps every
  * existing MobTalker-era script working untouched.
@@ -22,7 +25,8 @@ import com.github.tartaricacid.touhoulittlemaid.vn.VnMod;
 public enum VnScope {
     WORLD("@world."),
     MAID("@maid."),
-    SCENE("@scene.");
+    SCENE("@scene."),
+    PLAYER("@player.");
 
     private final String prefix;
 
